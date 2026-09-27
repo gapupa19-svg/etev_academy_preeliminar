@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ETEV Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Monoton&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000000; --bg2:#0a0718; --ink:#ffffff; --muted:#b9b6cc; --panel:#050505; --line:rgba(255,255,255,.14);
+  --tvp:#00f0ff; --tto:#b6ff3b; --esp:#ffb020; --tep:#ff2bd6; --hip:#b18cff;
+  --glow:1; --grid:rgba(157,123,255,.06);
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#000000}}
+:root[data-theme="dark"],:root[data-theme="light"]{--bg:#000000}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;min-height:100%;font-family:"Sora",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);
+  background:
+    radial-gradient(ellipse at 50% 50%, var(--bg2) 0%, var(--bg) 62%) fixed,
+    var(--bg);
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+.board{
+  position:relative;display:grid;gap:12px;padding:14px;min-height:100vh;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  grid-template-rows:auto 1fr 1fr 1fr auto;
+  max-width:1500px;margin:0 auto;
+}
+.core{
+  grid-column:2 / 6;grid-row:2 / 5;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:24px;min-height:320px;
+}
+.sign{
+  font-family:"Monoton","Sora",cursive;font-weight:400;margin:0;line-height:1.02;letter-spacing:.04em;
+  font-size:clamp(2.6rem,7.4vw,7rem);
+}
+.sign span{display:block}
+.sign .a{color:var(--tvp);text-shadow:0 0 calc(var(--glow)*6px) var(--tvp),0 0 calc(var(--glow)*22px) var(--tvp),0 0 calc(var(--glow)*48px) var(--tvp)}
+.sign .b{color:var(--tep);text-shadow:0 0 calc(var(--glow)*6px) var(--tep),0 0 calc(var(--glow)*22px) var(--tep),0 0 calc(var(--glow)*48px) var(--tep)}
+.sign .b{animation:flicker 2.4s linear 1 .4s both}
+@keyframes flicker{
+  0%{opacity:.15}8%{opacity:1}10%{opacity:.2}14%{opacity:1}40%{opacity:1}42%{opacity:.35}44%{opacity:1}100%{opacity:1}
+}
+.tagline{margin:18px 0 0;color:var(--muted);font-size:.95rem;max-width:44ch}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;margin-top:18px;font-size:.78rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px;background:var(--c);box-shadow:0 0 calc(var(--glow)*8px) var(--c)}
+.progress{margin-top:14px;font-size:.78rem;color:var(--muted)}
+.theme{position:absolute;top:14px;right:14px;z-index:2}
+
+.tile{
+  --c:var(--tvp);background:#050505 !important;
+  position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:6px;
+  text-align:left;padding:12px 13px;min-height:84px;cursor:pointer;font:inherit;color:var(--ink);
+  background:color-mix(in srgb,var(--panel) 78%,transparent);
+  border:1px solid color-mix(in srgb,var(--c) 55%,transparent);border-radius:10px;
+  box-shadow:inset 0 0 calc(var(--glow)*14px) color-mix(in srgb,var(--c) 18%,transparent);
+  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;
+}
+.tile:hover,.tile:focus-visible{
+  transform:translateY(-2px);border-color:var(--c);outline:none;
+  box-shadow:0 0 0 1px var(--c),0 0 calc(var(--glow)*22px) color-mix(in srgb,var(--c) 55%,transparent);
+}
+.tile .t{font-weight:600;font-size:.92rem;line-height:1.25}
+.tile .s{font-size:.74rem;color:var(--muted);line-height:1.3}
+.tile .dot{position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--c);opacity:0;box-shadow:0 0 calc(var(--glow)*8px) var(--c)}
+.tile.seen .dot{opacity:1}
+.side .tile{height:100%}
+.tvp{--c:var(--tvp)}.tto{--c:var(--tto)}.esp{--c:var(--esp)}.tep{--c:var(--tep)}.hip{--c:var(--hip)}
+
+.btn{font:inherit;font-size:.95rem;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.btn:hover,.btn:focus-visible{border-color:var(--ink);outline:none}
+
+/* Panel */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(3px);display:none;z-index:10}
+.scrim.on{display:block}
+.panel{
+  --c:var(--tvp);
+  position:fixed;z-index:11;left:50%;top:50%;
+  width:min(920px,calc(100% - 24px));max-height:min(88vh,calc(100% - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
+  background:#000;border:2px solid var(--c);border-radius:16px;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 40%,transparent),0 0 40px color-mix(in srgb,var(--c) 45%,transparent),0 0 120px color-mix(in srgb,var(--c) 18%,transparent);
+  display:flex;flex-direction:column;opacity:0;pointer-events:none;
+  transform:translate(-50%,-48%) scale(.97);transition:opacity .2s ease,transform .22s cubic-bezier(.2,.8,.2,1);
+}
+.panel.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.phead{padding:22px 28px 16px;border-bottom:1px solid var(--line)}
+.phead .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cluster{font-size:.9rem;color:var(--c);font-weight:600}
+.phead h2{margin:6px 0 4px;font-size:clamp(1.5rem,3vw,2rem);line-height:1.2;color:var(--ink);text-shadow:0 0 calc(var(--glow)*18px) color-mix(in srgb,var(--c) 40%,transparent)}
+.phead p{margin:0;color:var(--muted);font-size:1rem}
+.pbody{overflow-y:auto;padding:12px 28px 26px;flex:1}
+.facts{list-style:none;margin:0;padding:0}
+.facts li{position:relative;padding:10px 0 10px 16px;border-bottom:1px dashed var(--line);font-size:1.1rem;line-height:1.6;color:#fff}
+.facts li::before{content:"";position:absolute;left:0;top:21px;width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.facts li.hy::before{background:var(--c);box-shadow:0 0 calc(var(--glow)*9px) var(--c)}
+.facts li.trap::before{background:#ff4d4d;border-radius:1px;transform:rotate(45deg)}
+.facts li.ev::before{background:transparent;border:1px solid var(--muted)}
+.tag{display:inline-block;font-size:.82rem;font-weight:700;padding:1px 7px;border-radius:4px;margin-right:6px;vertical-align:1px}
+.hy .tag{color:#000;background:var(--c);box-shadow:0 0 10px var(--c)}
+.trap .tag{color:#fff;background:#ff2d45;box-shadow:0 0 10px #ff2d45}
+.ev .tag{color:var(--muted);border:1px solid var(--muted)}
+.facts b{color:var(--c);font-weight:700;text-shadow:0 0 6px var(--c),0 0 16px color-mix(in srgb,var(--c) 60%,transparent)}
+.trap b{color:#ff3b4e;text-shadow:0 0 6px #ff3b4e,0 0 16px rgba(255,59,78,.6)}
+.mini{width:100%;border-collapse:collapse;font-size:1rem;margin:6px 0 2px}
+.mini td,.mini th{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+.mini th{color:var(--c);font-weight:700;text-shadow:0 0 8px var(--c)}
+.tw{overflow-x:auto}
+.pfoot{display:flex;justify-content:space-between;gap:8px;padding:14px 28px;border-top:1px solid var(--line)}
+.refs{margin-top:18px;font-size:.88rem;color:var(--muted);line-height:1.5}
+
+
+/* Botón calculadoras */
+.core{position:relative}
+.calcbtn{
+  position:absolute;right:6px;bottom:6px;display:flex;align-items:center;justify-content:center;
+  width:150px;height:130px;border:0;cursor:pointer;font:inherit;color:#1a1400;background:transparent;padding:0;
+}
+.calcbtn svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 8px #ffe600) drop-shadow(0 0 22px rgba(255,230,0,.55))}
+.calcbtn span{position:relative;font-weight:800;font-size:.8rem;letter-spacing:.04em;line-height:1.1;text-align:center}
+.calcbtn span small{display:block;font-size:1.3rem;margin-bottom:2px}
+.calcbtn:hover svg,.calcbtn:focus-visible svg{filter:drop-shadow(0 0 12px #ffe600) drop-shadow(0 0 36px rgba(255,230,0,.8))}
+.calcbtn:focus-visible{outline:2px dashed #ffe600;outline-offset:4px}
+.calcbtn .hex{animation:pulse 2.6s ease-in-out infinite;transform-origin:center}
+@keyframes pulse{50%{transform:scale(1.04)}}
+
+/* Página calculadoras */
+.calcpage{position:fixed;inset:0;z-index:20;background:#000;overflow-y:auto;display:none;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.calcpage.on{display:block}
+.cwrap{max-width:1100px;margin:0 auto}
+.ctop{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ctitle{font-family:"Monoton","Sora",cursive;font-weight:400;font-size:clamp(1.8rem,5vw,3.2rem);margin:12px 0;color:#ffe600;
+  text-shadow:0 0 6px #ffe600,0 0 22px #ffe600,0 0 50px rgba(255,230,0,.6)}
+.cintro{color:var(--muted);font-size:1rem;margin:0 0 16px}
+.cgroups{display:grid;gap:12px;margin-bottom:18px}
+.cgroup h3{margin:0 0 6px;font-size:.9rem;color:var(--c);text-shadow:0 0 8px var(--c)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:.95rem;color:#fff;background:#070707;border:1px solid color-mix(in srgb,var(--c) 55%,transparent);border-radius:999px;padding:7px 14px;cursor:pointer}
+.chip:hover,.chip:focus-visible{border-color:var(--c);outline:none;box-shadow:0 0 12px color-mix(in srgb,var(--c) 60%,transparent)}
+.chip.act{background:var(--c);color:#000;font-weight:700;box-shadow:0 0 14px var(--c)}
+.ccard{--c:#ffe600;border:2px solid var(--c);border-radius:16px;background:#030303;padding:20px 22px;
+  box-shadow:0 0 30px color-mix(in srgb,var(--c) 30%,transparent)}
+.ccard h2{margin:0 0 4px;font-size:1.6rem;color:#fff;text-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent)}
+.ccard .cdesc{margin:0 0 14px;color:var(--muted);font-size:.98rem}
+.citems{display:grid;gap:8px}
+.ci{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:1.05rem;cursor:pointer}
+.ci:hover{border-color:color-mix(in srgb,var(--c) 60%,transparent)}
+.ci input[type=checkbox]{width:22px;height:22px;accent-color:var(--c);flex:none;cursor:pointer}
+.ci.on{border-color:var(--c);box-shadow:inset 0 0 12px color-mix(in srgb,var(--c) 22%,transparent)}
+.ci .pts{flex:none;font-weight:700;color:var(--c);min-width:3.2em;text-align:right}
+.cl{flex:1}
+.cr{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:1.05rem}
+.cr .opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.cr label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer;font-size:.95rem}
+.cr input{accent-color:var(--c)}
+.cr label:has(input:checked){border-color:var(--c);color:var(--c)}
+.cn{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:1.05rem}
+.cn input{width:120px;font:inherit;font-size:1.05rem;color:#fff;background:#111;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.cn input:focus{outline:none;border-color:var(--c)}
+.res{position:sticky;bottom:0;margin-top:16px;padding:14px 16px;border-radius:12px;background:#000;border:2px solid var(--rc,#fff);
+  box-shadow:0 0 22px color-mix(in srgb,var(--rc,#fff) 45%,transparent)}
+.res .sc{font-size:2rem;font-weight:800;color:var(--rc);text-shadow:0 0 12px var(--rc);line-height:1.1}
+.res .lv{font-size:1.15rem;font-weight:700;color:#fff;margin-top:4px}
+.res .tx{font-size:1rem;color:#e9e9e9;margin-top:4px;line-height:1.5}
+.cnote{margin-top:12px;font-size:.88rem;color:var(--muted);line-height:1.5}
+.cactions{display:flex;justify-content:flex-end;margin-top:10px}
+@media (max-width:860px){
+  .calcbtn{position:relative;right:auto;bottom:auto;margin-top:22px}
+}
+@media (prefers-reduced-motion:reduce){.calcbtn .hex{animation:none}}
+
+@media (max-width:860px){
+  .board{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;min-height:0}
+  .core{grid-column:1 / -1;grid-row:auto;order:-1;min-height:0;padding:40px 8px 20px}
+  .side{display:contents}
+  .top,.bottom{display:contents}
+  .theme{top:10px;right:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  .sign .b{animation:none}.panel,.tile{transition:none}
+}
+</style>
+</head>
+<body>
+<main class="board" id="board">
+  <section class="core" aria-label="ETEV Academy">
+    <h1 class="sign"><span class="a">ETEV</span><span class="b">ACADEMY</span></h1>
+    <p class="tagline">Temario de enfermedad tromboembólica venosa en formato high-yield. Pulsa cualquier apartado para desplegarlo.</p>
+    <div class="legend" aria-label="Leyenda de colores">
+      <span style="--c:var(--tvp)"><i></i>TVP y TVS</span>
+      <span style="--c:var(--tto)"><i></i>Tratamiento</span>
+      <span style="--c:var(--esp)"><i></i>Poblaciones y profilaxis</span>
+      <span style="--c:var(--tep)"><i></i>TEP</span>
+      <span style="--c:var(--hip)"><i></i>Hipercoagulabilidad</span>
+    </div>
+    <div class="progress" id="progress"></div>
+    <button class="calcbtn" id="calcBtn" type="button" aria-label="Abrir calculadoras de ETEV">
+      <svg viewBox="0 0 150 130" aria-hidden="true"><g class="hex"><polygon points="38,4 112,4 148,65 112,126 38,126 2,65" fill="#ffe600" stroke="#fff6a0" stroke-width="2"/><polygon points="44,14 106,14 136,65 106,116 44,116 14,65" fill="none" stroke="#1a1400" stroke-opacity=".25" stroke-width="2"/></g></svg>
+      <span><small>∑</small>CALCULADORAS</span>
+    </button>
+  </section>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="pTitle" aria-hidden="true">
+  <div class="phead">
+    <div class="row"><span class="cluster" id="pCluster"></span><button class="btn" id="closeBtn" type="button">Cerrar ✕</button></div>
+    <h2 id="pTitle"></h2>
+    <p id="pSub"></p>
+  </div>
+  <div class="pbody" id="pBody"></div>
+  <div class="pfoot">
+    <button class="btn" id="prevBtn" type="button">‹ Anterior</button>
+    <button class="btn" id="nextBtn" type="button">Siguiente ›</button>
+  </div>
+</aside>
+
+<section class="calcpage" id="calcPage" aria-label="Calculadoras ETEV" aria-hidden="true">
+  <div class="cwrap">
+    <div class="ctop"><h1 class="ctitle">CALCULADORAS</h1><button class="btn" id="calcBack" type="button">‹ Volver a ETEV Academy</button></div>
+    <p class="cintro">Escalas de enfermedad tromboembólica venosa. Elige una escala: el resultado se actualiza al marcar cada criterio.</p>
+    <div class="cgroups" id="cGroups"></div>
+    <div class="ccard" id="cCard"></div>
+  </div>
+</section>
+
+<script>
+const CL={tvp:"TVP y TVS",tto:"Tratamiento",esp:"Poblaciones y profilaxis",tep:"TEP",hip:"Hipercoagulabilidad"};
+// pos: t=top, l=left, r=right, b=bottom
+const S=[
+{pos:"t",c:"tvp",t:"Definiciones y factores de riesgo",s:"Proximal vs distal, Virchow, riesgo de recurrencia",f:[
+["hy",`<b>TVP proximal</b>: poplítea o por encima (poplítea, femoral, femoral profunda, ilíacas). <b>Distal</b>: infrapoplítea (tibiales, peroneas, gemelares, sóleas).`],
+["n",`<b>ETEV recurrente</b>: nuevo episodio tras completar las 2 primeras semanas de tratamiento.`],
+["hy",`La ESC 2019 abandona "provocada/no provocada" y clasifica el factor desencadenante por <b>riesgo de recurrencia a largo plazo</b> si se suspende a los 3 meses:
+<div class="tw"><table class="mini"><tr><th>Riesgo</th><th>Factor</th><th>Ejemplos</th></tr>
+<tr><td>Bajo &lt;3%/año</td><td>Mayor transitorio (RR &gt;10)</td><td>Cirugía con AG &gt;30 min, encamamiento hospitalario ≥3 d, fractura</td></tr>
+<tr><td>Intermedio 3-8%/año</td><td>Menor transitorio (RR &lt;10), persistente no maligno o ninguno</td><td>Cirugía &lt;30 min, estrógenos, embarazo/puerperio, vuelo largo, EII, enfermedad autoinmune activa</td></tr>
+<tr><td>Alto &gt;8%/año</td><td>Persistente mayor</td><td>Cáncer activo, ≥1 ETEV previa sin factor mayor, SAF</td></tr></table></div>`],
+["n",`<b>Tríada de Virchow</b>: hipercoagulabilidad, daño endotelial, estasis venosa.`],
+["n",`Factores crónicos: edad &gt;60, ETEV previa (personal/familiar), May-Thurner, cáncer, síndrome nefrótico, SAF, EII, trombofilia hereditaria.`],
+["trap",`El factor de riesgo más potente para un nuevo episodio es <b>el antecedente de ETEV</b>, no la trombofilia hereditaria.`]
+]},
+{pos:"t",c:"tvp",t:"Wells TVP y dímero D",s:"Probabilidad pretest y exclusión",f:[
+["hy",`<b>Wells TVP</b> (+1 cada uno): cáncer activo, TVP previa, parálisis/paresia/yeso, encamamiento ≥3 d o cirugía mayor ≤12 sem, dolor en trayecto venoso profundo, edema de toda la pierna, pantorrilla ≥3 cm, fóvea unilateral, colaterales superficiales no varicosas. <b>−2</b> si diagnóstico alternativo igual o más probable.`],
+["n",`Interpretación: 0 baja, 1-2 intermedia, ≥3 alta. Versión dicotómica: ≥2 TVP probable.`],
+["hy",`<b>Dímero D</b>: sensibilidad ~96%, especificidad ~36%. Solo sirve para <b>excluir</b> en probabilidad baja/improbable. Corte ajustado por edad en &gt;50 años: <b>edad × 10 ng/mL</b>.`],
+["hy",`Probabilidad alta: ir directamente a eco. Un dímero D negativo <b>no</b> excluye con seguridad.`],
+["trap",`Wells <b>no está validado</b> en embarazo ni puerperio y sobreestima la probabilidad si coexiste celulitis.`],
+["trap",`Dímero D positivo es inespecífico: edad, cáncer, embarazo, inflamación, cirugía, hospitalización.`]
+]},
+{pos:"t",c:"tvp",t:"Ecografía y algoritmo diagnóstico",s:"Compresión, repetición, recurrencia",f:[
+["hy",`Criterio diagnóstico principal: <b>incompresibilidad venosa</b>. Doppler aporta ausencia de flujo o falta de aumento con compresión distal/Valsalva.`],
+["hy",`Eco de pierna completa (radiología): S/E ~95% para <b>proximal</b>, ~65% para distal. POCUS por clínicos entrenados: igual de fiable para proximal, puede perder distales.`],
+["hy",`Eco proximal negativa con probabilidad alta: <b>repetir en ~1 semana</b> (o hacer dímero D). Con probabilidad baja/intermedia y eco negativa: TVP descartada.`],
+["n",`Eco es la prueba inicial en probabilidad intermedia/alta, <b>embarazo y postoperatorio</b> (aunque la probabilidad sea baja) y tras dímero D positivo.`],
+["hy",`<b>Recurrencia ipsilateral</b>: trombo en segmento nuevo o aumento &gt;4 mm del diámetro residual incompresible respecto al previo. Útil tener eco basal al terminar el tratamiento.`],
+["n",`Eco no concluyente o imposible (obesidad, yeso, edema masivo): flebo-TC, flebo-RM o flebografía.`],
+["n",`Antes de anticoagular: hemograma, función renal y hepática, coagulación.`]
+]},
+{pos:"t",c:"tvp",t:"Trombosis venosa superficial",s:"Longitud, distancia al cayado, fondaparinux",f:[
+["hy",`<b>Ecografía siempre</b>: TVP y/o TEP concomitante en ~25%. Valorar extensión y distancia a la unión safeno-femoral/poplítea.`],
+["hy",`<b>&lt;5 cm y lejos del cayado, sin factores de riesgo</b>: AINE + compresión. Reevaluar en 7-10 días.`],
+["hy",`<b>≥5 cm y &gt;3 cm del cayado</b> (o &lt;5 cm con factores de riesgo): <b>fondaparinux 2,5 mg/24 h × 45 días</b> (elección). Alternativas: rivaroxabán 10 mg × 45 d, HBPM profiláctica/intermedia.`],
+["hy",`<b>≤3 cm del cayado</b> o afectación de perforantes: tratar como TVP, dosis terapéuticas ≥3 meses.`],
+["n",`Riesgo de TVP concomitante: edad ≥75, ETEV previa, vena no varicosa o por encima de la rodilla, cáncer, embarazo, estrógenos, cirugía reciente.`],
+["trap",`Flebitis por <b>canulación</b>: solo tratamiento sintomático. Tromboflebitis <b>migratoria</b> (Trousseau): buscar cáncer; considerar Behçet y Buerger.`],
+["ev",`<span class="tag">Ensayo</span>CALISTO (fondaparinux vs placebo), SURPRISE (rivaroxabán 10 mg no inferior a fondaparinux).`]
+]},
+{pos:"t",c:"tvp",t:"TVP de miembros superiores",s:"Catéteres, Paget-Schroetter, Constans",f:[
+["hy",`Proximal: axilar/subclavia (subclavia la más afectada). <b>Secundaria</b> (catéter, marcapasos, cáncer) mucho más frecuente que primaria.`],
+["hy",`<b>Paget-Schroetter</b>: joven, brazo dominante, esfuerzo repetido, síndrome del desfiladero torácico venoso. Si persisten síntomas: descompresión quirúrgica (resección de 1ª costilla).`],
+["n",`<b>Constans</b>: dispositivo +1, edema +1, dolor localizado +1, diagnóstico alternativo igual de probable −1. ≥2 probable.`],
+["hy",`Anticoagular ≥3 meses. <b>No retirar el catéter</b> si funciona y sigue siendo necesario; retirarlo si disfunción, infección, ya no se necesita o no se puede anticoagular.`],
+["n",`TEP asociado ~12% (vs ~38% en MMII). Síntomas más leves por colaterales.`],
+["n",`Distal asintomática: vigilancia ecográfica. Distal sintomática: anticoagular.`]
+]},
+{pos:"t",c:"tvp",t:"Complicaciones y secuelas",s:"Flegmasia, SPT, HPTEC, gangrena venosa",f:[
+["hy",`<b>Flegmasia cerulea dolens</b>: oclusión venosa masiva con compromiso arterial (edema, cianosis, frialdad, pulsos ausentes). Urgencia: trombectomía/fibrinólisis dirigida, fasciotomía. Amputación como último recurso.`],
+["trap",`<b>Gangrena venosa</b> con pulsos presentes: típicamente warfarina en hipercoagulabilidad adquirida (cáncer, TIH, SAF) por caída de proteína C.`],
+["hy",`<b>Síndrome postrombótico</b>: 20-50% tras TVP proximal. Las medias <b>no lo previenen</b> (ensayo SOX); usarlas solo para alivio sintomático.`],
+["hy",`<b>HPTEC</b>: ~2-3% tras TEP. Revisar a los 3-6 meses: disnea o limitación → ETT → <b>gammagrafía V/Q</b> (mejor prueba de cribado) → centro de referencia HP/HPTEC.`],
+["n",`Tromboflebitis séptica en usuarios de drogas IV.`],
+["n",`Retrasar cirugía electiva ≥3 meses desde el inicio de la anticoagulación.`]
+]},
+{pos:"l",c:"tto",t:"Anticoagulación: fármacos y dosis",s:"ACOD, parenterales, AVK",f:[
+["hy",`<div class="tw"><table class="mini"><tr><th>Fármaco</th><th>Inicio</th><th>Mantenimiento</th><th>Extendido</th></tr>
+<tr><td>Apixabán</td><td>10 mg/12 h × 7 d</td><td>5 mg/12 h</td><td>2,5 mg/12 h</td></tr>
+<tr><td>Rivaroxabán</td><td>15 mg/12 h × 21 d</td><td>20 mg/24 h</td><td>10 (o 20) mg/24 h</td></tr>
+<tr><td>Edoxabán</td><td>HBPM ≥5 d</td><td>60 mg/24 h*</td><td>60 mg/24 h</td></tr>
+<tr><td>Dabigatrán</td><td>HBPM ≥5 d</td><td>150 mg/12 h</td><td>150 mg/12 h</td></tr>
+<tr><td>AVK</td><td>Solapar HBPM</td><td>INR 2-3</td><td>INR 2-3</td></tr></table></div>*30 mg si FG 15-50, peso ≤60 kg o inhibidores de P-gp.`],
+["hy",`<b>ACOD de primera línea</b> frente a AVK: igual eficacia y <b>menos sangrado mayor</b> (sobre todo intracraneal).`],
+["hy",`AVK: solapar parenteral <b>≥5 días</b> y hasta INR ≥2 mantenido (24-48 h).`],
+["n",`HBPM/fondaparinux preferidos a HNF en estables. <b>HNF</b> si FG &lt;30, inestabilidad o reperfusión prevista, absorción SC dudosa. <b>Fondaparinux</b> si antecedente de TIH.`],
+["trap",`ACOD <b>contraindicados</b>: embarazo y lactancia, SAF (sobre todo triple positivo), prótesis valvular mecánica, FG &lt;15 (&lt;30 dabigatrán).`],
+["hy",`Recurrencia con anticoagulación correcta: descartar incumplimiento, interacciones y cáncer. Con ACO oral → <b>pasar a HBPM</b>; con HBPM → subir dosis ~25%.`],
+["n",`Tratamiento ambulatorio preferente si TVP no complicada. Evitar AINE durante la anticoagulación.`]
+]},
+{pos:"l",c:"tto",t:"Duración y tratamiento extendido",s:"3 meses, indefinido, dosis reducidas",f:[
+["hy",`<b>Mínimo 3 meses para todos</b> (fase de tratamiento).`],
+["hy",`Factor <b>mayor transitorio</b> (cirugía, trauma, encamamiento): suspender a los 3 meses.`],
+["hy",`<b>Indefinido</b>: ETEV recurrente no ligada a factor mayor transitorio, SAF (con AVK), cáncer activo. Considerar en primer episodio sin factor identificable o con factor persistente no maligno si el riesgo hemorrágico es aceptable.`],
+["hy",`En extendido se pueden usar <b>dosis reducidas</b>: apixabán 2,5 mg/12 h, rivaroxabán 10 mg/24 h.`],
+["n",`<b>HERDOO2</b> (primer episodio no provocado, mujeres): SPT/hiperpigmentación, dímero D ≥250 con tratamiento, IMC ≥30, edad ≥65. Mujer con ≤1 punto: puede suspender. Varones: riesgo alto por definición.`],
+["n",`AAS solo si el paciente rechaza anticoagular: reduce recurrencia ~30-40%, claramente inferior a ACOD a dosis reducida.`],
+["n",`Reevaluar al menos anualmente: riesgo hemorrágico, función renal/hepática, adherencia.`],
+["ev",`<span class="tag">Ensayo</span>AMPLIFY-EXT, EINSTEIN-CHOICE (dosis reducidas), WARFASA/ASPIRE (AAS).`]
+]},
+{pos:"l",c:"tto",t:"Riesgo hemorrágico y TVP distal",s:"Escalas, vigilancia, terapias avanzadas",f:[
+["hy",`<b>VTE-BLEED</b>: cáncer activo 2; varón con HTA no controlada 1; anemia 1,5; sangrado previo 1,5; edad ≥60 1,5; IR 1,5. <b>≥2 alto</b>.`],
+["n",`<b>RIETE</b>: sangrado mayor reciente 2; creatinina &gt;1,2 1,5; anemia 1,5; cáncer 1; TEP clínico 1; edad &gt;75 1. 0 bajo, 1-4 moderado, &gt;4 alto.`],
+["n",`ACCP: 0 factores 1,6% (3 m) / 0,8% año; 1 factor 3,2% / 1,6%; ≥2 factores 12,8% / ≥6,5%.`],
+["hy",`<b>TVP distal aislada</b> asintomática o leve sin factores de extensión: vigilancia con eco seriada 2 semanas. Anticoagular si síntomas graves o factores de extensión: dímero D muy alto, &gt;5 cm o &gt;7 mm, varias venas, próxima a la poplítea, ETEV previa, cáncer, paciente hospitalizado.`],
+["hy",`<b>Filtro de VCI</b>: solo si TVP proximal/TEP y contraindicación absoluta para anticoagular. Recuperable y retirar en cuanto sea posible.`],
+["n",`Trombólisis dirigida por catéter: flegmasia; valorar TVP iliofemoral &lt;14 días, bajo riesgo hemorrágico y esperanza de vida ≥1 año.`]
+]},
+{pos:"r",c:"esp",t:"Trombosis asociada a cáncer",s:"HBPM vs ACOD, duración, cribado",f:[
+["hy",`<b>HBPM o ACOD</b> (apixabán, rivaroxabán, edoxabán); ambos preferidos a AVK. Duración <b>≥6 meses</b> e indefinida mientras el cáncer esté activo o en tratamiento.`],
+["trap",`Cáncer <b>gastrointestinal o genitourinario no resecado</b>: más sangrado con edoxabán y rivaroxabán; preferir HBPM o apixabán.`],
+["n",`Revisar interacciones (CYP3A4/P-gp), trombocitopenia (&lt;50.000: ajustar HBPM) y tolerancia digestiva.`],
+["hy",`TEP/TVP <b>incidental</b> se trata igual que la sintomática.`],
+["n",`Tumor cerebral primario o metastásico: sin modificaciones sistemáticas.`],
+["hy",`Profilaxis ambulatoria: <b>Khorana ≥2</b> al iniciar quimioterapia → apixabán o rivaroxabán (o HBPM). Mieloma con talidomida/lenalidomida: AAS o HBPM según riesgo.`],
+["hy",`Cribado de cáncer oculto tras ETEV sin desencadenante: anamnesis, exploración, analítica, RX tórax y cribados por edad. La <b>TC toracoabdominal sistemática no aporta</b> beneficio.`],
+["ev",`<span class="tag">Ensayo</span>CLOT, Hokusai VTE-Cancer, SELECT-D, Caravaggio, AVERT, CASSINI, SOME.`]
+]},
+{pos:"r",c:"esp",t:"Embarazo, puerperio y pediatría",s:"YEARS adaptado, HBPM, neuroaxial",f:[
+["hy",`Riesgo máximo en el <b>puerperio (1ª semana)</b>; en gestación, 3er trimestre. TVP más proximal e izquierda (ilíaca).`],
+["hy",`TEP: <b>YEARS adaptado</b> (signos de TVP, hemoptisis, TEP como diagnóstico más probable). 0 criterios y DD &lt;1.000, o ≥1 criterio y DD &lt;500 → excluido. Si signos de TVP: eco primero.`],
+["n",`TVP: eco de compresión; si negativa y sospecha ilíaca → eco ilíaca o RM sin gadolinio; si no, repetir eco días 3 y 7. Edema de pantorrilla &gt;2 cm sugiere TVP.`],
+["hy",`Tratamiento: <b>HBPM a dosis ajustada a peso</b>. AVK y ACOD contraindicados en embarazo. Mantener ≥6 semanas posparto y ≥3 meses en total.`],
+["hy",`Lactancia: HBPM y warfarina compatibles; <b>ACOD no</b>.`],
+["trap",`Neuroaxial: no punción en las <b>24 h</b> siguientes a HBPM terapéutica; no HBPM en las <b>4 h</b> tras retirar el catéter epidural.`],
+["n",`Reiniciar 6-12 h tras parto vaginal y 12-24 h tras cesárea si no hay sangrado.`],
+["n",`<b>Niños</b>: catéter venoso central es la causa más frecuente; ETEV no provocada rara. ACOD preferidos (rivaroxabán, dabigatrán). Provocada 3 meses; no provocada 6-12 meses. Dímero D y escalas poco útiles.`]
+]},
+{pos:"r",c:"esp",t:"Tromboprofilaxis",s:"PADUA, IMPROVE, cirugía",f:[
+["hy",`Todo ingreso médico: riesgo trombótico con <b>PADUA</b> (≥4 alto) y hemorrágico con <b>IMPROVE</b> (≥7 alto).`],
+["n",`PADUA: cáncer activo 3, ETEV previa 3, movilidad reducida ≥3 d 3, trombofilia 3; cirugía/trauma &lt;1 mes 2; edad &gt;70, IC/IR respiratoria, IAM/ictus, infección/reumatológica, IMC ≥30, tratamiento hormonal 1.`],
+["hy",`PADUA alto e IMPROVE bajo: <b>HBPM</b> (enoxaparina 40 mg, bemiparina 3.500 UI) o fondaparinux 2,5 mg. FG &lt;30: enoxaparina 20 mg, bemiparina 2.500 UI. IMPROVE alto: profilaxis mecánica (compresión neumática).`],
+["hy",`Paciente médico: durante el ingreso con movilidad reducida. La profilaxis extendida tras el alta no es rutinaria.`],
+["hy",`Cirugía: primera dosis dentro de las 12 h posteriores; <b>cirugía oncológica abdominopélvica mayor: 4 semanas</b>. Artroplastia de cadera ~35 días, rodilla 10-14 días; AAS o ACOD son opciones de primera línea.`],
+["n",`Viajes &gt;4 h con factor de riesgo: medias de compresión, deambular; HBPM si riesgo alto.`],
+["trap",`La compresión neumática intermitente es superior a las medias en pacientes encamados (ictus).`]
+]},
+{pos:"b",c:"tep",t:"TEP: clínica y pruebas iniciales",s:"Fisiopatología, ECG, RX, GSA, ETT",f:[
+["hy",`<b>Disnea</b> es el síntoma más frecuente (&gt;75%). Dolor pleurítico ~20%. La exploración suele ser normal: crepitantes o sibilancias sugieren otro diagnóstico.`],
+["hy",`ECG: hallazgo más frecuente <b>taquicardia sinusal</b>. Sobrecarga VD: S1Q3T3, BRD nuevo, T negativas V1-V4 (mal pronóstico).`],
+["n",`GSA: hipoxemia, hipocapnia, alcalosis respiratoria, gradiente A-a aumentado. <b>Normal no excluye</b>.`],
+["n",`RX: suele ser normal. Joroba de Hampton (infarto), signo de Westermark (oligohemia), Fleischner (arteria pulmonar prominente).`],
+["hy",`ETT: dilatación VD (VD/VI &gt;1), <b>signo de McConnell</b> (acinesia de pared libre con ápex conservado), signo 60/60, TAPSE &lt;16 mm, trombo en cavidades derechas.`],
+["n",`Mecanismo del shock: aumento de poscarga del VD → dilatación → isquemia VD → caída del gasto izquierdo (interdependencia ventricular).`],
+["n",`Sin tratamiento, recurrencia ~10% el primer año. Infarto pulmonar ~10%, por émbolos periféricos pequeños.`]
+]},
+{pos:"b",c:"tep",t:"TEP: algoritmo diagnóstico",s:"Wells, Ginebra, PERC, YEARS, angio-TC",f:[
+["hy",`<b>Wells TEP</b>: signos de TVP 3; TEP más probable 3; FC &gt;100 1,5; cirugía/inmovilización ≤4 sem 1,5; ETEV previa 1,5; hemoptisis 1; cáncer 1. Dicotómico: <b>&gt;4 probable</b>. Tres niveles: &lt;2 baja, 2-6 intermedia, ≥7 alta.`],
+["n",`Ginebra revisada (objetiva): &lt;4 baja, 4-10 intermedia, &gt;10 alta.`],
+["hy",`<b>PERC</b> solo en probabilidad baja: edad ≥50, FC ≥100, SatO2 &lt;95%, hemoptisis, estrógenos, ETEV previa, cirugía/trauma ≤4 sem, edema unilateral. Todos negativos: no más pruebas.`],
+["hy",`Estable, probabilidad baja/intermedia: dímero D (ajustado por edad o YEARS). Negativo excluye. Positivo o probabilidad alta: <b>angio-TC</b>.`],
+["hy",`Angio-TC con defecto segmentario o más proximal confirma. Angio-TC negativa en baja/intermedia descarta. <b>Eco con TVP proximal</b> en sospecha de TEP confirma ETEV.`],
+["n",`<b>Gammagrafía V/Q</b>: IR, alergia a contraste, embarazo con RX normal. Perfusión normal excluye.`],
+["hy",`Inestable: <b>ETT a pie de cama</b>. Disfunción VD y angio-TC no disponible → tratar como TEP de alto riesgo.`],
+["trap",`Probabilidad alta: no pedir dímero D. No usar angio-RM para descartar TEP ni añadir flebo-TC a la angio-TC.`],
+["n",`TEP subsegmentario aislado: valorar vigilancia si no hay TVP proximal y el riesgo de recurrencia es bajo.`]
+]},
+{pos:"b",c:"tep",t:"Estratificación pronóstica",s:"ESC 2019 y categorías AHA/ACC 2026",f:[
+["hy",`<b>Alto riesgo</b> = inestabilidad hemodinámica: parada cardiaca; shock obstructivo (PAS &lt;90 o vasopresores con hipoperfusión orgánica); hipotensión persistente (PAS &lt;90 o caída ≥40 mmHg &gt;15 min no explicada por otra causa).`],
+["hy",`<div class="tw"><table class="mini"><tr><th>Riesgo</th><th>PESI III-V / sPESI ≥1</th><th>Disfunción VD (imagen)</th><th>Troponina ↑</th></tr>
+<tr><td>Intermedio-alto</td><td>+</td><td>+</td><td>+</td></tr>
+<tr><td>Intermedio-bajo</td><td>+</td><td colspan="2">Uno o ninguno positivo</td></tr>
+<tr><td>Bajo</td><td>−</td><td>−</td><td>− (opcional)</td></tr></table></div>`],
+["hy",`<b>sPESI</b>: edad &gt;80, cáncer, enfermedad cardiopulmonar crónica, FC ≥110, PAS &lt;100, SatO2 &lt;90%. 0 puntos: mortalidad 30 d ~1%; ≥1: ~10%.`],
+["n",`PESI: I &lt;66, II 66-85, III 86-105, IV 106-125, V &gt;125 puntos.`],
+["trap",`PESI I-II o sPESI 0 <b>con disfunción VD o troponina elevada</b> se clasifica como intermedio, no bajo.`],
+["hy",`Bajo riesgo con apoyo social, sin otro motivo de ingreso (criterios Hestia): <b>alta precoz</b> y tratamiento domiciliario.`],
+["n",`La terminología "masivo/submasivo" está en desuso.`],
+["hy",`<b>AHA/ACC 2026 (Creager, Circulation 2026)</b>: primera guía AHA/ACC de TEP. Cinco <b>categorías clínicas A-E</b> con subcategorías. Se asigna por el indicador <b>más grave</b> (clínico, analítico o de imagen) y el paciente puede cambiar de categoría con el tiempo.
+<div class="tw"><table class="mini"><tr><th>Cat.</th><th>Definición</th><th>Actitud inicial</th></tr>
+<tr><td><b>A</b></td><td>Subclínico: incidental y asintomático</td><td>Alta desde urgencias</td></tr>
+<tr><td><b>B1 / B2</b></td><td>Sintomático con score bajo (PESI ≤85, sPESI 0, Hestia 0, Bova ≤4). B1 subsegmentario; B2 segmentario o más proximal</td><td>Alta precoz, ACOD</td></tr>
+<tr><td><b>C1</b></td><td>Score elevado (PESI &gt;85, sPESI ≥1, Bova &gt;4), VD y biomarcadores normales</td><td rowspan="3">Ingreso, HBPM, lactato, ETT, PERT</td></tr>
+<tr><td><b>C2</b></td><td>VD anómalo <b>o</b> ≥1 biomarcador elevado (troponina/BNP)</td></tr>
+<tr><td><b>C3</b></td><td>VD anómalo <b>y</b> ≥1 biomarcador elevado</td></tr>
+<tr><td><b>D1</b></td><td>Fallo cardiopulmonar incipiente: hipotensión transitoria (PAS &lt;90 o caída &gt;40 mmHg &lt;15 min o que responde a fluidos)</td><td rowspan="2">Terapias avanzadas "pueden considerarse"</td></tr>
+<tr><td><b>D2</b></td><td><b>Shock normotenso</b>: lactato &gt;2, FRA, oliguria, alteración mental, IC &lt;2,2</td></tr>
+<tr><td><b>E1</b></td><td>Hipotensión persistente o recurrente con shock cardiogénico</td><td>Fibrinólisis sistémica, CDT, trombectomía o embolectomía razonables</td></tr>
+<tr><td><b>E2</b></td><td>Shock refractario o parada cardiaca</td><td>Fibrinólisis sistémica, ECMO-VA</td></tr></table></div>
+<b>Modificador R</b> (categorías C-E): hipoxemia, taquipnea o necesidad de O2; en E, necesidad de ventilación (p. ej., C3R, D2R).`],
+["hy",`AHA/ACC 2026: <b>lactato</b> clase 1 en C-E; ETT preferida sobre TC para valorar el VD; <b>PERT clase 1</b> en C-E; HBPM mejor que HNF; ACOD mejor que AVK.`],
+["trap",`Fibrinólisis sistémica en <b>A a C2 es dañina</b> (clase 3). En C3 el beneficio es incierto (PEITHO). Evitar sedación profunda e intubación en C-E salvo imprescindible (colapso en la inducción).`],
+["n",`Equivalencia orientativa con ESC 2019: bajo ≈ B; intermedio ≈ C; la categoría D recoge el <b>shock normotenso</b> y la hipotensión transitoria que la ESC dejaba en intermedio; alto ≈ E.`],
+["ev",`<span class="tag">Validación</span>Cohorte multicéntrica 2026 (n=17.223): mortalidad a 30 días 1,5% (B), 8,9% (C), 15,5% (D) y 31,9% (E); las subcategorías intermedias discriminan peor.`]
+]},
+{pos:"b",c:"tep",t:"TEP: tratamiento y reperfusión",s:"Fibrinólisis, embolectomía, soporte",f:[
+["hy",`<b>Alto riesgo</b>: HNF IV con bolo + <b>fibrinólisis sistémica</b> (alteplasa 100 mg en 2 h; régimen acelerado 0,6 mg/kg en 15 min, máx 50 mg). Si contraindicada o fallida: embolectomía quirúrgica o percutánea.`],
+["hy",`<b>Intermedio-alto</b>: anticoagular y monitorizar. Fibrinólisis de <b>rescate</b> solo si deterioro hemodinámico. No fibrinólisis sistemática en intermedio o bajo riesgo.`],
+["ev",`<span class="tag">Ensayo</span>PEITHO: tenecteplasa redujo descompensación hemodinámica pero aumentó hemorragia mayor e ictus hemorrágico (~2%), sin beneficio en mortalidad.`],
+["hy",`Soporte: fluidos prudentes (<b>≤500 mL</b>, la sobrecarga empeora el VD), noradrenalina, dobutamina, O2/CNAF, evitar intubación si es posible, ECMO en refractarios.`],
+["trap",`Contraindicaciones absolutas de fibrinólisis: ictus hemorrágico o de origen desconocido, ictus isquémico &lt;6 meses, neoplasia del SNC, trauma/cirugía/TCE en 3 semanas, diátesis hemorrágica, sangrado activo.`],
+["n",`Anticoagular mientras se completa el diagnóstico si la probabilidad es alta o intermedia (salvo alto riesgo hemorrágico).`],
+["n",`Filtro de VCI no sistemático. Equipo PERT si está disponible.`]
+]},
+{pos:"b",c:"tep",t:"Embolia no trombótica",s:"Grasa, aire, líquido amniótico, cemento",f:[
+["hy",`<b>Grasa</b>: fractura de huesos largos, 12-72 h. Tríada: respiratoria (~95%), neurológica (~80%), <b>petequias</b> en axilas, conjuntiva y tórax (~50%). RM "en cielo estrellado". Tratamiento de soporte; fijación precoz de fracturas previene.`],
+["n",`Criterios de Gurd: 1 mayor + 4 menores. Schonfeld: &gt;5 puntos.`],
+["hy",`<b>Aérea venosa</b> (CVC, neurocirugía sentado): soplo en rueda de molino. <b>Decúbito lateral izquierdo + Trendelenburg</b>, O2 100%, aspirar por CVC.`],
+["hy",`<b>Aérea arterial</b>: decúbito supino, O2 100%; <b>oxigenoterapia hiperbárica</b> es el tratamiento de elección.`],
+["hy",`<b>Líquido amniótico</b>: parto o posparto inmediato (hasta 48 h). Hipoxia + hipotensión súbitas seguidas de <b>CID</b>. Diagnóstico clínico; disfunción VD inicial y luego VI.`],
+["n",`Cemento: vertebroplastia o artroplastia cementada; soporte ± extracción.`]
+]},
+{pos:"b",c:"hip",t:"Trombofilia, SAF y TIH",s:"A quién, cuándo y qué pedir",f:[
+["hy",`<b>Factor V Leiden</b> (Arg506Gln, resistencia a proteína C activada): trombofilia hereditaria más frecuente en caucásicos (~5%). <b>Protrombina G20210A</b> (~3%, región 3'UTR).`],
+["hy",`<b>Déficit de antitrombina</b>: la más trombogénica; puede causar resistencia a heparina.`],
+["trap",`Déficit de <b>proteína C o S</b>: necrosis cutánea por warfarina. Iniciar AVK siempre solapado con heparina.`],
+["hy",`Estudiar solo si cambia el manejo: edad joven con ETEV sin desencadenante o con factor débil, localización inusual, recurrencia, historia familiar fuerte, pérdidas gestacionales.`],
+["hy",`<b>No estudiar en fase aguda</b> (PC, PS y AT se consumen; heparina baja AT; AVK baja PC/PS; ACOD interfieren con el anticoagulante lúpico).`],
+["hy",`<b>SAF</b>: anticoagulante lúpico, anticardiolipina, anti-β2GPI, confirmados a las ≥12 semanas. Tratamiento indefinido con <b>AVK (INR 2-3)</b>; evitar ACOD, sobre todo en triple positivo (TRAPS).`],
+["hy",`Trombosis <b>esplácnica</b>: JAK2 V617F (neoplasia mieloproliferativa) y citometría de flujo para HPN.`],
+["trap",`<b>TIH</b> (score 4T): suspender toda heparina; argatrobán, fondaparinux o ACOD. No iniciar AVK hasta plaquetas normalizadas.`],
+["n",`Portadoras de factor V Leiden: evitar anticonceptivos con estrógenos.`]
+]}
+];
+
+const board=document.getElementById('board');
+const wrap={t:document.createElement('div'),l:document.createElement('div'),r:document.createElement('div'),b:document.createElement('div')};
+let seen=new Set();
+try{const v=localStorage.getItem('etev-seen');if(v)seen=new Set(JSON.parse(v))}catch(e){}
+
+// Place tiles on grid
+const counts={t:0,l:0,r:0,b:0};
+S.forEach((sec,i)=>{
+  const b=document.createElement('button');
+  b.type='button';b.className='tile '+sec.c+(seen.has(i)?' seen':'');b.dataset.i=i;
+  b.innerHTML=`<span class="dot" aria-hidden="true"></span><span class="t">${sec.t}</span><span class="s">${sec.s}</span>`;
+  const k=counts[sec.pos]++;
+  if(sec.pos==='t'){b.style.gridColumn=(k+1);b.style.gridRow=1}
+  if(sec.pos==='b'){b.style.gridColumn=(k+1);b.style.gridRow=5}
+  if(sec.pos==='l'){b.style.gridColumn=1;b.style.gridRow=(k+2)}
+  if(sec.pos==='r'){b.style.gridColumn=6;b.style.gridRow=(k+2)}
+  b.addEventListener('click',()=>openP(i));
+  board.appendChild(b);
+});
+function mobileFix(){
+  const m=window.matchMedia('(max-width:860px)').matches;
+  board.querySelectorAll('.tile').forEach(t=>{
+    const sec=S[+t.dataset.i];const k=S.filter((x,j)=>x.pos===sec.pos&&j<+t.dataset.i).length;
+    if(m){t.style.gridColumn='';t.style.gridRow=''}
+    else{
+      if(sec.pos==='t'){t.style.gridColumn=k+1;t.style.gridRow=1}
+      if(sec.pos==='b'){t.style.gridColumn=k+1;t.style.gridRow=5}
+      if(sec.pos==='l'){t.style.gridColumn=1;t.style.gridRow=k+2}
+      if(sec.pos==='r'){t.style.gridColumn=6;t.style.gridRow=k+2}
+    }
+  });
+}
+mobileFix();window.addEventListener('resize',mobileFix);
+
+const panel=document.getElementById('panel'),scrim=document.getElementById('scrim');
+let cur=-1,lastFocus=null;
+function prog(){document.getElementById('progress').textContent=`Apartados revisados: ${seen.size} de ${S.length}`}
+prog();
+function openP(i){
+  cur=i;const s=S[i];
+  if(!panel.classList.contains('on'))lastFocus=document.activeElement;
+  panel.style.setProperty('--c',`var(--${s.c})`);
+  document.getElementById('pCluster').textContent=CL[s.c];
+  document.getElementById('pTitle').textContent=s.t;
+  document.getElementById('pSub').textContent=s.s;
+  const lab={hy:'IMP⭐️',trap:'Trampa',ev:''};
+  document.getElementById('pBody').innerHTML='<ul class="facts">'+s.f.map(([k,h])=>{
+    const tag=(k==='hy'||k==='trap')?`<span class="tag">${lab[k]}</span>`:'';
+    return `<li class="${k}">${tag}${h}</li>`}).join('')+'</ul>'+
+    (i===S.length-1||true?`<p class="refs">Fuente: temario ETEV aportado. Marco de referencia: ESC 2019 y AHA/ACC 2026 TEP, CHEST 2021, ASH 2020, ESVS 2021, guías SEMI.</p>`:'');
+  document.getElementById('pBody').scrollTop=0;
+  panel.classList.add('on');scrim.classList.add('on');panel.setAttribute('aria-hidden','false');
+  document.getElementById('closeBtn').focus();
+  seen.add(i);try{localStorage.setItem('etev-seen',JSON.stringify([...seen]))}catch(e){}
+  const t=board.querySelector(`.tile[data-i="${i}"]`);if(t)t.classList.add('seen');prog();
+}
+function closeP(){
+  panel.classList.remove('on');scrim.classList.remove('on');panel.setAttribute('aria-hidden','true');cur=-1;
+  if(lastFocus)lastFocus.focus();
+}
+document.getElementById('closeBtn').onclick=closeP;scrim.onclick=closeP;
+document.getElementById('prevBtn').onclick=()=>openP((cur-1+S.length)%S.length);
+document.getElementById('nextBtn').onclick=()=>openP((cur+1)%S.length);
+document.addEventListener('keydown',e=>{
+  if(cur<0)return;
+  if(e.key==='Escape')closeP();
+  if(e.key==='ArrowRight')openP((cur+1)%S.length);
+  if(e.key==='ArrowLeft')openP((cur-1+S.length)%S.length);
+});
+
+
+// ================= CALCULADORAS =================
+const Y='#ffe600',OK='#b6ff3b',MID='#ffb020',HI='#ff2d45';
+const c=(l,p)=>({k:'c',l,p}), r=(l,o)=>({k:'r',l,o}), n=(l,id,u,ph)=>({k:'n',l,id,u,ph});
+const res=(col,sc,lv,tx)=>({col,sc,lv,tx});
+const GR=[["TVP","var(--tvp)"],["TEP: diagnóstico","var(--tep)"],["TEP: pronóstico","#ff7ae8"],["Profilaxis y cáncer","var(--esp)"],["Duración, sangrado y dosis","var(--tto)"]];
+const CALCS=[
+{id:'wtvp',g:0,n:'Wells TVP',d:'Probabilidad pretest de TVP de miembros inferiores (no validado en embarazo).',items:[
+ c('Cáncer activo',1),c('Parálisis, paresia o yeso reciente en MI',1),c('Encamado ≥3 días o cirugía mayor en las últimas 12 semanas',1),c('Dolor a la palpación en el trayecto venoso profundo',1),c('Edema de toda la pierna',1),c('Pantorrilla ≥3 cm mayor que la contralateral',1),c('Edema con fóvea en la pierna sintomática',1),c('Venas colaterales superficiales no varicosas',1),c('TVP previa documentada',1),c('Diagnóstico alternativo igual o más probable',-2)],
+ f:s=>s<=0?res(OK,s,'Probabilidad baja','Dímero D. Si es negativo, TVP descartada.'):s<=2?res(MID,s,'Probabilidad intermedia','Ecografía de compresión (o dímero D de alta sensibilidad). Modelo dicotómico: '+(s>=2?'TVP probable.':'TVP improbable.')):res(HI,s,'Probabilidad alta','Ecografía directa. Si es negativa, repetir en ~1 semana.')},
+{id:'constans',g:0,n:'Constans (MMSS)',d:'Probabilidad de TVP de miembro superior.',items:[c('Dispositivo venoso (catéter, marcapasos)',1),c('Edema localizado',1),c('Dolor localizado',1),c('Otro diagnóstico al menos igual de plausible',-1)],
+ f:s=>s>=2?res(HI,s,'TVP de MMSS probable','Ecografía dúplex.'):res(OK,s,'TVP de MMSS improbable','Dímero D; si es positivo, ecografía.')},
+{id:'wtep',g:1,n:'Wells TEP',d:'Probabilidad clínica de TEP.',items:[c('Signos clínicos de TVP',3),c('TEP más probable que otros diagnósticos',3),c('FC >100 lpm',1.5),c('Cirugía o inmovilización en las 4 semanas previas',1.5),c('TEP o TVP previa',1.5),c('Hemoptisis',1),c('Cáncer activo',1)],
+ f:s=>{const d=s>4?'TEP probable (>4): angio-TC.':'TEP improbable (≤4): dímero D.';return s<2?res(OK,s,'Probabilidad baja',d+' Si PTP baja, aplicar PERC.'):s<7?res(MID,s,'Probabilidad intermedia',d):res(HI,s,'Probabilidad alta',d+' No pedir dímero D.')}},
+{id:'ginebra',g:1,n:'Ginebra revisada',d:'Probabilidad clínica de TEP con variables objetivas.',items:[c('Edad >65 años',1),c('TVP o TEP previa',3),c('Cirugía o fractura de MI en el último mes',2),c('Cáncer activo (o curado <1 año)',2),c('Dolor unilateral en MI',3),c('Hemoptisis',2),r('Frecuencia cardiaca',[['<75',0],['75-94',3],['≥95',5]]),c('Dolor a la palpación venosa profunda y edema unilateral',4)],
+ f:s=>s<4?res(OK,s,'Probabilidad baja (~9%)','Dímero D.'):s<=10?res(MID,s,'Probabilidad intermedia (~26%)','Dímero D; si es positivo, angio-TC.'):res(HI,s,'Probabilidad alta (~76%)','Angio-TC directa.')},
+{id:'perc',g:1,n:'PERC',d:'Solo aplicable si la probabilidad pretest ya es baja (gestalt <15%).',items:[c('Edad ≥50 años',1),c('FC ≥100 lpm',1),c('SatO2 <95% basal',1),c('Hemoptisis',1),c('Uso de estrógenos',1),c('TVP o TEP previa',1),c('Cirugía o traumatismo en las 4 semanas previas',1),c('Edema unilateral de MI',1)],
+ f:s=>s===0?res(OK,'0','PERC negativo','Riesgo <2%: no se requieren más pruebas.'):res(MID,s,'PERC positivo','No se puede descartar: dímero D.')},
+{id:'years',g:1,n:'YEARS (y YEARS adaptado)',d:'Umbral de dímero D según criterios YEARS. Válido en embarazo (Artemis).',items:[c('Signos clínicos de TVP',1),c('Hemoptisis',1),c('TEP como diagnóstico más probable',1),n('Dímero D','dd','ng/mL','p. ej. 750')],
+ f:(s,v)=>{const dd=v.dd;if(isNaN(dd))return res(Y,s+' criterio(s)','Introduce el dímero D','Umbral: '+(s===0?'1.000':'500')+' ng/mL.');const cut=s===0?1000:500;return dd<cut?res(OK,s+' criterio(s)','TEP excluido','Dímero D <'+cut+' ng/mL. Sin angio-TC.'):res(HI,s+' criterio(s)','Angio-TC indicada','Dímero D ≥'+cut+' ng/mL.')}},
+{id:'ddage',g:1,n:'Dímero D ajustado por edad',d:'Corte = edad × 10 ng/mL en mayores de 50 años (ADJUST-PE).',items:[n('Edad','age','años','72'),n('Dímero D','dd','ng/mL','650')],
+ f:(s,v)=>{if(isNaN(v.age))return res(Y,'—','Introduce la edad','');const cut=v.age>50?v.age*10:500;if(isNaN(v.dd))return res(Y,cut+' ng/mL','Punto de corte','');return v.dd<cut?res(OK,cut+' ng/mL','Dímero D negativo','Excluye TEP/TVP si la probabilidad pretest no es alta.'):res(HI,cut+' ng/mL','Dímero D positivo','Precisa prueba de imagen.')}},
+{id:'pesi',g:2,n:'PESI',d:'Mortalidad a 30 días.',items:[n('Edad','age','años','70'),c('Sexo masculino',10),c('Cáncer',30),c('Insuficiencia cardiaca crónica',10),c('Enfermedad pulmonar crónica',10),c('FC ≥110 lpm',20),c('PAS <100 mmHg',30),c('FR ≥30 rpm',20),c('Temperatura <36 °C',20),c('Alteración del estado mental',60),c('SatO2 <90%',20)],
+ f:(s,v)=>{if(isNaN(v.age))return res(Y,'—','Introduce la edad','');const t=s+v.age;return t<=65?res(OK,t,'Clase I: riesgo muy bajo','Mortalidad 30 d 0-1,6%. ESC bajo / AHA B si sintomático.'):t<=85?res(OK,t,'Clase II: riesgo bajo','Mortalidad 1,7-3,5%.'):t<=105?res(MID,t,'Clase III: riesgo intermedio','Mortalidad 3,2-7,1%. Valorar VD y troponina.'):t<=125?res(HI,t,'Clase IV: riesgo alto','Mortalidad 4-11,4%.'):res(HI,t,'Clase V: riesgo muy alto','Mortalidad 10-24,5%.')}},
+{id:'spesi',g:2,n:'sPESI',d:'PESI simplificado.',items:[c('Edad >80 años',1),c('Cáncer',1),c('Enfermedad cardiopulmonar crónica',1),c('FC ≥110 lpm',1),c('PAS <100 mmHg',1),c('SatO2 <90%',1)],
+ f:s=>s===0?res(OK,0,'Riesgo bajo','Mortalidad 30 d ~1%. Candidato a alta precoz si no hay disfunción VD.'):res(HI,s,'Riesgo no bajo','Mortalidad ~10%. Valorar VD, troponina y lactato.')},
+{id:'bova',g:2,n:'Bova',d:'Complicaciones a 30 días en TEP normotenso.',items:[c('PAS 90-100 mmHg',2),c('Troponina elevada',2),c('Disfunción VD (ETT o TC)',2),c('FC ≥110 lpm',1)],
+ f:s=>s<=2?res(OK,s,'Estadio I','Riesgo bajo de complicaciones (~4%).'):s<=4?res(MID,s,'Estadio II','Riesgo intermedio (~10%).'):res(HI,s,'Estadio III','Riesgo alto (~29%). AHA/ACC: Bova >4 = score elevado.')},
+{id:'hestia',g:2,n:'Hestia',d:'Cualquier criterio positivo excluye el tratamiento ambulatorio.',items:[c('Inestabilidad hemodinámica',1),c('Precisa trombólisis o embolectomía',1),c('Sangrado activo o alto riesgo hemorrágico',1),c('O2 >24 h para SatO2 >90%',1),c('TEP diagnosticado bajo anticoagulación',1),c('Dolor que requiere analgesia IV >24 h',1),c('Motivo médico o social de ingreso >24 h',1),c('ClCr <30 mL/min',1),c('Hepatopatía grave',1),c('Embarazo',1),c('Antecedente de TIH',1)],
+ f:s=>s===0?res(OK,0,'Hestia negativo','Candidato a tratamiento ambulatorio (HOME-PE).'):res(HI,s,'Hestia positivo','Ingreso hospitalario.')},
+{id:'esc',g:2,n:'Estratificación ESC 2019',d:'Riesgo de muerte precoz.',items:[c('Inestabilidad hemodinámica (parada, shock obstructivo, hipotensión persistente)',100),c('PESI III-V o sPESI ≥1',1),c('Disfunción VD en ETT o angio-TC',10),c('Troponina elevada',20)],
+ f:s=>{if(s>=100)return res(HI,'ALTO','Riesgo alto','Reperfusión: fibrinólisis sistémica (embolectomía si contraindicada o fallida).');const sc=s%10,vd=(s%20)>=10,tn=s>=20;if(!sc)return (vd||tn)?res(MID,'INT-BAJO','Intermedio-bajo','PESI I-II con VD o troponina alterados se clasifica como intermedio. Anticoagular e ingresar.'):res(OK,'BAJO','Riesgo bajo','Alta precoz y tratamiento domiciliario si no hay otro motivo de ingreso.');return (vd&&tn)?res(HI,'INT-ALTO','Intermedio-alto','Anticoagular, monitorizar; fibrinólisis de rescate si deterioro.'):res(MID,'INT-BAJO','Intermedio-bajo','Anticoagular e ingresar.')}},
+{id:'aha',g:2,n:'Categoría AHA/ACC 2026',d:'Se asigna por el indicador más grave presente.',items:[
+ r('Presentación',[['Asintomático, hallazgo incidental',0],['Sintomático',1]]),
+ c('Score de gravedad elevado (PESI >85, sPESI ≥1, Bova >4)','sev'),
+ c('Solo émbolos subsegmentarios','sub'),
+ c('VD anómalo (tamaño o función en ETT/TC)','rv'),
+ c('≥1 biomarcador elevado (troponina o BNP)','bio'),
+ c('Hipotensión transitoria (<15 min o responde a fluidos)','d1'),
+ c('Shock normotenso (lactato >2, FRA, oliguria, alteración mental, IC <2,2)','d2'),
+ c('Hipotensión persistente o recurrente con shock cardiogénico','e1'),
+ c('Shock refractario o parada cardiaca','e2'),
+ c('Modificador respiratorio (hipoxemia, taquipnea, O2, soporte ventilatorio)','R')],
+ f:(s,v)=>{const x=v.flags,rm=x.R?'R':'';let cat,col,tx;
+  if(x.e2){cat='E2';col=HI;tx='Fibrinólisis sistémica razonable; ECMO-VA.'}
+  else if(x.e1){cat='E1';col=HI;tx='Terapias avanzadas razonables: fibrinólisis sistémica, CDT, trombectomía o embolectomía.'}
+  else if(x.d2){cat='D2';col=HI;tx='Fallo incipiente (shock normotenso). Terapias avanzadas pueden considerarse. PERT.'}
+  else if(x.d1){cat='D1';col=MID;tx='Fallo incipiente (hipotensión transitoria). Terapias avanzadas pueden considerarse.'}
+  else if(v.radio[0]===0&&!x.sev&&!x.rv&&!x.bio){cat='A';col=OK;tx='Alta desde urgencias con anticoagulación (ACOD).';return res(col,cat,'Categoría '+cat,tx)}
+  else if(x.sev||x.rv||x.bio){cat=(x.rv&&x.bio)?'C3':(x.rv||x.bio)?'C2':'C1';col=cat==='C1'?MID:cat==='C2'?MID:HI;tx='Ingreso, HBPM, lactato, ETT, PERT. '+(cat==='C3'?'Beneficio de reperfusión incierto; vigilar deterioro.':'Fibrinólisis sistémica dañina (clase 3).')+(!x.sev?' (Score bajo pero VD/biomarcador alterado: se asigna por el indicador más grave.)':'')}
+  else{cat=x.sub?'B1':'B2';col=OK;tx='Sintomático con score bajo: alta precoz, ACOD.';return res(col,cat,'Categoría '+cat,tx)}
+  return res(col,cat+rm,'Categoría '+cat+(rm?' con modificador respiratorio':''),tx)}},
+{id:'padua',g:3,n:'PADUA',d:'Riesgo trombótico en el paciente médico hospitalizado.',items:[c('Cáncer activo',3),c('ETEV previa (excluye TVS)',3),c('Movilidad reducida ≥3 días',3),c('Trombofilia conocida',3),c('Traumatismo o cirugía en el último mes',2),c('Edad ≥70 años',1),c('Insuficiencia cardiaca o respiratoria',1),c('IAM o ictus isquémico agudo',1),c('Infección aguda o enfermedad reumatológica',1),c('Obesidad (IMC ≥30)',1),c('Tratamiento hormonal',1)],
+ f:s=>s>=4?res(HI,s,'Riesgo alto','Profilaxis farmacológica si IMPROVE <7.'):res(OK,s,'Riesgo bajo','Movilización precoz e hidratación. Sin profilaxis farmacológica.')},
+{id:'improve',g:3,n:'IMPROVE sangrado',d:'Riesgo hemorrágico en el paciente médico hospitalizado.',items:[c('Úlcera gastroduodenal activa',4.5),c('Sangrado en los 3 meses previos',4),c('Plaquetas <50.000/µL',4),r('Edad',[['<40',0],['40-84',1.5],['≥85',3.5]]),c('Insuficiencia hepática (INR >1,5)',2.5),r('Filtrado glomerular',[['≥60',0],['30-59',1],['<30',2.5]]),c('Ingreso en UCI',2.5),c('Catéter venoso central',2),c('Enfermedad reumática',2),c('Cáncer activo',2),c('Sexo masculino',1)],
+ f:s=>s>=7?res(HI,s,'Riesgo hemorrágico alto','Profilaxis mecánica (compresión neumática intermitente).'):res(OK,s,'Riesgo hemorrágico bajo','Profilaxis farmacológica si PADUA ≥4.')},
+{id:'khorana',g:3,n:'Khorana',d:'Riesgo de ETEV en ambulatorios que inician quimioterapia.',items:[r('Localización tumoral',[['Otra',0],['Alto riesgo (pulmón, linfoma, ginecológico, vejiga, testículo)',1],['Muy alto riesgo (estómago, páncreas)',2]]),c('Plaquetas ≥350.000/µL',1),c('Hb <10 g/dL o uso de eritropoyetina',1),c('Leucocitos >11.000/µL',1),c('IMC ≥35',1)],
+ f:s=>s>=3?res(HI,s,'Riesgo alto','Considerar profilaxis (apixabán, rivaroxabán o HBPM) si bajo riesgo hemorrágico.'):s>=2?res(MID,s,'Riesgo intermedio','Khorana ≥2 fue el umbral de AVERT y CASSINI: considerar profilaxis.'):res(OK,s,'Riesgo bajo','Sin profilaxis rutinaria.')},
+{id:'herdoo',g:4,n:'HERDOO2',d:'Solo mujeres con primer episodio no provocado, tras 5-12 meses de anticoagulación.',items:[c('Hiperpigmentación, edema o enrojecimiento en cualquier pierna',1),c('Dímero D ≥250 ng/mL bajo anticoagulación',1),c('IMC ≥30',1),c('Edad ≥65 años',1)],
+ f:s=>s<=1?res(OK,s,'Riesgo de recurrencia bajo','Puede suspenderse la anticoagulación (REVERSE II). En varones no aplica: riesgo alto por definición.'):res(HI,s,'Riesgo de recurrencia alto','Valorar anticoagulación extendida.')},
+{id:'vtebleed',g:4,n:'VTE-BLEED',d:'Sangrado mayor durante la anticoagulación estable (tras el día 30).',items:[c('Cáncer activo',2),c('Varón con HTA no controlada',1),c('Anemia',1.5),c('Sangrado previo',1.5),c('Edad ≥60 años',1.5),c('Disfunción renal (ClCr 30-60)',1.5)],
+ f:s=>s>=2?res(HI,s,'Riesgo hemorrágico alto','Reevaluar extensión, dosis reducida y factores modificables.'):res(OK,s,'Riesgo hemorrágico bajo','')},
+{id:'riete',g:4,n:'RIETE sangrado',d:'Sangrado mayor en los 3 primeros meses.',items:[c('Sangrado mayor reciente (<15 días)',2),c('Creatinina >1,2 mg/dL',1.5),c('Anemia (Hb <13 varón, <12 mujer)',1.5),c('Cáncer',1),c('TEP clínicamente manifiesto',1),c('Edad >75 años',1)],
+ f:s=>s===0?res(OK,s,'Riesgo bajo','Sangrado mayor ~0,3%.'):s<=4?res(MID,s,'Riesgo intermedio','Sangrado mayor ~2,6%.'):res(HI,s,'Riesgo alto','Sangrado mayor ~7,3%.')},
+{id:'cg',g:4,n:'Cockcroft-Gault',d:'Aclaramiento de creatinina para ajustar ACOD y HBPM.',items:[n('Edad','age','años','75'),n('Peso','w','kg','70'),n('Creatinina','cr','mg/dL','1,1'),r('Sexo',[['Varón',0],['Mujer',1]])],
+ f:(s,v)=>{if([v.age,v.w,v.cr].some(isNaN)||v.cr<=0)return res(Y,'—','Completa los datos','');let cl=(140-v.age)*v.w/(72*v.cr);if(v.radio[0]===1)cl*=0.85;cl=Math.round(cl);
+  const t=cl<15?'ACOD no recomendados. HNF o AVK.':cl<30?'Dabigatrán contraindicado. Edoxabán 30 mg (15-50). Precaución con apixabán y rivaroxabán. Enoxaparina 1 mg/kg/24 h; profilaxis 20 mg.':cl<=50?'Edoxabán 30 mg/24 h. Resto de ACOD con precaución.':'Dosis estándar.';
+  return res(cl<30?HI:cl<=50?MID:OK,cl+' mL/min','ClCr estimado',t)}}
+];
+
+const gEl=document.getElementById('cGroups'),card=document.getElementById('cCard'),page=document.getElementById('calcPage');
+let curCalc=null;
+gEl.innerHTML=GR.map(([name,col],gi)=>`<div class="cgroup" style="--c:${col}"><h3>${name}</h3><div class="chips">${CALCS.filter(x=>x.g===gi).map(x=>`<button class="chip" type="button" data-id="${x.id}">${x.n}</button>`).join('')}</div></div>`).join('');
+gEl.querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>showCalc(b.dataset.id)));
+const fmt=p=>typeof p==='number'?(p>0?'+':'')+String(p).replace('.',','):'';
+function showCalc(id){
+  const C=CALCS.find(x=>x.id===id);curCalc=C;
+  gEl.querySelectorAll('.chip').forEach(b=>b.classList.toggle('act',b.dataset.id===id));
+  const col=GR[C.g][1];card.style.setProperty('--c',col);
+  card.innerHTML=`<h2>${C.n}</h2><p class="cdesc">${C.d}</p><div class="citems">`+C.items.map((it,i)=>{
+    if(it.k==='c')return `<label class="ci"><input type="checkbox" data-i="${i}"><span class="cl">${it.l}</span><span class="pts">${fmt(it.p)}</span></label>`;
+    if(it.k==='r')return `<div class="cr"><span>${it.l}</span><div class="opts">`+it.o.map((o,j)=>`<label><input type="radio" name="r${i}" data-i="${i}" value="${j}" ${j===0?'checked':''}>${o[0]}${o[1]?' ('+fmt(o[1])+')':''}</label>`).join('')+`</div></div>`;
+    return `<label class="cn"><span class="cl">${it.l}${it.u?' ('+it.u+')':''}</span><input type="text" inputmode="decimal" data-i="${i}" placeholder="${it.ph||''}"></label>`;
+  }).join('')+`</div><div class="res" id="cRes"></div><div class="cactions"><button class="btn" type="button" id="cReset">Borrar</button></div>`;
+  card.querySelectorAll('input').forEach(el=>el.addEventListener('input',compute));
+  card.querySelector('#cReset').onclick=()=>showCalc(id);
+  compute();
+}
+function compute(){
+  const C=curCalc;let s=0;const v={flags:{},radio:[]};
+  C.items.forEach((it,i)=>{
+    if(it.k==='c'){const el=card.querySelector(`input[type=checkbox][data-i="${i}"]`);el.closest('.ci').classList.toggle('on',el.checked);
+      if(el.checked){if(typeof it.p==='number')s+=it.p;else v.flags[it.p]=true}}
+    else if(it.k==='r'){const el=card.querySelector(`input[name="r${i}"]:checked`);const j=+el.value;v.radio.push(j);s+=it.o[j][1]}
+    else{const el=card.querySelector(`input[data-i="${i}"]`);v[it.id]=parseFloat(String(el.value).replace(',','.'))}
+  });
+  s=Math.round(s*10)/10;
+  const R=C.f(s,v);const box=card.querySelector('#cRes');
+  box.style.setProperty('--rc',R.col);
+  box.innerHTML=`<div class="sc">${String(R.sc).replace('.',',')}</div><div class="lv">${R.lv}</div>${R.tx?`<div class="tx">${R.tx}</div>`:''}`;
+}
+function openCalc(){page.classList.add('on');page.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';if(!curCalc)showCalc('wtvp');page.scrollTop=0;document.getElementById('calcBack').focus()}
+function closeCalc(){page.classList.remove('on');page.setAttribute('aria-hidden','true');document.body.style.overflow='';document.getElementById('calcBtn').focus()}
+document.getElementById('calcBtn').onclick=()=>{if(location.hash!=='#calculadoras')location.hash='calculadoras';else openCalc()};
+document.getElementById('calcBack').onclick=()=>{if(location.hash==='#calculadoras')history.back();else closeCalc()};
+window.addEventListener('hashchange',()=>{location.hash==='#calculadoras'?openCalc():page.classList.contains('on')&&closeCalc()});
+if(location.hash==='#calculadoras')openCalc();
+</script>
+</body>
+</html>
